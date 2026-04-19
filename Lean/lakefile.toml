@@ -1,0 +1,36 @@
+name = "CS5232"
+version = "0.1.0"
+keywords = ["math"]
+defaultTargets = ["LoVe", "PraVDA", "Project"]
+
+[leanOptions]
+pp.unicode.fun = true # pretty-prints `fun a ↦ b`
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.23.0"
+
+[[require]]
+name = "Loom"
+git = "https://github.com/verse-lab/loom.git"
+rev = "master"
+
+[[require]]
+name = "veil"
+git = "https://github.com/verse-lab/veil.git"
+rev = "v4.23.0"
+
+[[require]]
+name = "ssreflect"
+git = "https://github.com/verse-lab/lean-ssr.git"
+rev = "v4.23.0"
+
+[[lean_lib]]
+name = "PraVDA"
+
+[[lean_lib]]
+name = "LoVe"
+
+[[lean_lib]]
+name = "Project"
