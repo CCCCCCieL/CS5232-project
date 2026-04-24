@@ -18,6 +18,9 @@ set_option auto.smt.solver.name "cvc5"
 
 This is the project file.
 The goal is to return the first positive integer which is not in the array.
+
+For this stage I mostly work on the spec. The real algorithm is still left as
+the next step.
 -/
 
 namespace Project
@@ -35,12 +38,50 @@ def IsFirstMissingPositive (a : Array Int) (ans : Nat) : Prop :=
   Not (occursPositive a ans) /\
   forall x, 0 < x -> x < ans -> occursPositive a x
 
+-- I will need this later when I compare the changed array with the old array.
+@[grind]
+def sameOccurrences (a b : Array Int) : Prop :=
+  forall x, occursPositive a x <-> occursPositive b x
+
+-- A small helper for the normal in-place solution.
+@[grind]
+def inRangeForArray (a : Array Int) (x : Int) : Prop :=
+  1 <= x /\ x <= Int.ofNat a.size
+
+@[grind]
+def targetIndex (x : Int) : Nat :=
+  Int.toNat x - 1
+
+example : occursPositive #[1, 2, 0] 1 := by
+  exists 0
+
+example : occursPositive #[1, 2, 0] 2 := by
+  exists 1
+
+example : occursPositive #[3, 4, -1, 1] 1 := by
+  exists 3
+
+-- Later I want to prove these full examples too. For now they are commented
+-- out because the negative array facts are not very easy for `grind`.
+--
+-- example : IsFirstMissingPositive #[1, 2, 0] 3 := by
+--   grind [IsFirstMissingPositive, occursPositive]
+--
+-- example : IsFirstMissingPositive #[3, 4, -1, 1] 2 := by
+--   grind [IsFirstMissingPositive, occursPositive]
+--
+-- example : IsFirstMissingPositive #[7, 8, 9, 11, 12] 1 := by
+--   grind [IsFirstMissingPositive, occursPositive]
+
 /-!
 The first implementation plan is simple:
 try 1, then 2, then 3, and scan the array each time.
 
 This is slower than the usual in-place algorithm, but the proof should be
 easier to finish first.
+
+For now this is only a placeholder. I keep the spec already connected to the
+method, so the next stage is just filling the loop and invariants.
 -/
 
 method firstMissingPositiveBaseline (a : Array Int) return (ans : Nat)
@@ -56,6 +97,8 @@ prove_correct firstMissingPositiveBaseline by
 /-!
 The next step is the in-place algorithm. It should move a value `x` to
 index `x - 1` when `1 <= x <= n`.
+
+The hard part should be proving that swaps keep `sameOccurrences`.
 -/
 
 method firstMissingPositiveInPlace (mut arr : Array Int) return (ans : Nat)
