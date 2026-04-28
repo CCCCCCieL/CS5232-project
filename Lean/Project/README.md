@@ -1,10 +1,10 @@
 # First Missing Positive
 
-This is my CS5232 project.
+This is my CS5232 project. It uses Lean/Velvet to verify the First Missing
+Positive problem.
 
-The problem:
-
-Given an integer array, return the smallest positive integer that is missing.
+The task: given an integer array, return the smallest positive number which is
+missing.
 
 Examples:
 
@@ -14,25 +14,21 @@ Examples:
 | `[3, 4, -1, 1]` | `2` |
 | `[7, 8, 9, 11, 12]` | `1` |
 
-## Current Stage
+## Repo
 
-This is stage 2 for me.
+```text
+https://github.com/CCCCCCieL/cs5232-2026
+```
 
-What is done now:
-
-* the main spec is written;
-* a few small examples check the spec;
-* some helper names for the in-place algorithm are added.
-
-The actual baseline loop is still not finished yet.
+The tagged release link can be added after the final tag is made.
 
 ## Files
 
 | File | Meaning |
 | --- | --- |
 | `Lean/Project.lean` | Project entry file. |
-| `Lean/Project/FirstMissingPositive.lean` | Spec and current code skeleton. |
-| `Lean/Project/README.md` | Project notes. |
+| `Lean/Project/FirstMissingPositive.lean` | Main code and proof. |
+| `Lean/Project/README.md` | This note. |
 
 ## Build
 
@@ -42,13 +38,42 @@ From the `Lean` folder:
 lake build Project
 ```
 
-This version is mostly for the specification. The file still has a `sorry`
-because the algorithm proof is not done yet.
+On my machine it takes about 1 minute. Some warnings may come from libraries.
 
-## Plan
+## Run Examples
 
-1. Write the formal specification. Done.
-2. Add small examples for the spec. Done.
-3. Implement the simple baseline algorithm. Next.
-4. Prove the baseline algorithm.
-5. Try the in-place algorithm if there is time.
+```bash
+lake env lean Project/FirstMissingPositive.lean
+```
+
+Expected output:
+
+```text
+DivM.res 3
+DivM.res 2
+DivM.res 1
+DivM.res (3, #[1, 2, 0])
+DivM.res (2, #[3, 4, -1, 1])
+DivM.res (1, #[7, 8, 9, 11, 12])
+```
+
+## What Is Proved
+
+The main spec is `IsFirstMissingPositive a ans`.
+
+It says:
+
+1. `ans` is positive;
+2. `ans` is not in the array;
+3. every smaller positive number is in the array.
+
+The proved program is `firstMissingPositiveBaseline`. It checks candidate
+answers from 1 upward and scans the array each time.
+
+`firstMissingPositiveInPlace` is currently a wrapper around the proved baseline.
+So it satisfies the same spec, but it is not the real in-place algorithm yet.
+
+## Limitation
+
+The standard fast solution does in-place swaps. I only keep some helper names
+for that direction. The full in-place proof is future work.
