@@ -158,6 +158,71 @@ def inRangeForArray (a : Array Int) (x : Int) : Prop :=
 def targetIndex (x : Int) : Nat :=
   Int.toNat x - 1
 
+/-!
+This is the LeetCode style solution idea.
+It tries to put value `x` into index `x - 1`.
+
+reference: https://leetcode.com/problems/first-missing-positive/solutions/4925226/first-missing-positive-by-leetcode-5ihk/
+-/
+
+method firstMissingPositiveLeetCodeDemo (mut arr : Array Int) return (ans : Nat)
+  do
+    let n := arr.size
+    let mut i := 0
+
+    while i < n
+      invariant arr.size = n
+      invariant i <= n
+      decreasing n - i
+    do
+      let mut fuel := n
+
+      while fuel > 0
+        invariant arr.size = n
+        invariant i < n
+        invariant fuel <= n
+        decreasing fuel
+      do
+        let x := arr[i]!
+        if 1 <= x && x <= Int.ofNat n then
+          let target := Int.toNat x - 1
+          if arr[target]! != x then
+            let oldTarget := arr[target]!
+            arr := arr.set! target x
+            arr := arr.set! i oldTarget
+            fuel := fuel - 1
+          else
+            fuel := 0
+        else
+          fuel := 0
+
+      i := i + 1
+
+    let mut j := 0
+    let mut ans := n + 1
+    let mut found := false
+
+    while j < n && !found
+      invariant arr.size = n
+      invariant j <= n
+      decreasing n - j
+    do
+      if arr[j]! != Int.ofNat (j + 1) then
+        ans := j + 1
+        found := true
+        j := j + 1
+      else
+        j := j + 1
+
+    return ans
+
+-- check correctness
+#eval! (firstMissingPositiveLeetCodeDemo #[1, 2, 0]).run
+#eval! (firstMissingPositiveLeetCodeDemo #[3, 4, -1, 1]).run
+#eval! (firstMissingPositiveLeetCodeDemo #[7, 8, 9, 11, 12]).run
+#eval! (firstMissingPositiveLeetCodeDemo #[1, 1]).run
+#eval! (firstMissingPositiveLeetCodeDemo #[2, 1]).run
+
 method firstMissingPositiveInPlace (mut arr : Array Int) return (ans : Nat)
   ensures IsFirstMissingPositive arrOld ans
   do

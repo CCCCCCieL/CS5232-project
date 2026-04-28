@@ -3,8 +3,7 @@
 This is my CS5232 project. It uses Lean/Velvet to verify the First Missing
 Positive problem.
 
-The task: given an integer array, return the smallest positive number which is
-missing.
+The task: given an integer array, return the smallest positive number which is missing.
 
 Examples:
 
@@ -53,9 +52,16 @@ DivM.res 3
 DivM.res 2
 DivM.res 1
 DivM.res (3, #[1, 2, 0])
+DivM.res (2, #[1, -1, 3, 4])
+DivM.res (1, #[7, 8, 9, 11, 12])
+DivM.res (2, #[1, 1])
+DivM.res (3, #[1, 2])
+DivM.res (3, #[1, 2, 0])
 DivM.res (2, #[3, 4, -1, 1])
 DivM.res (1, #[7, 8, 9, 11, 12])
 ```
+
+The middle five lines are from the LeetCode-style demo. It also prints the array after rearranging.
 
 ## What Is Proved
 
@@ -72,6 +78,8 @@ answers from 1 upward and scans the array each time.
 
 `firstMissingPositiveInPlace` is currently a wrapper around the proved baseline.
 So it satisfies the same spec, but it is not the real in-place algorithm yet.
+
+There is also `firstMissingPositiveLeetCodeDemo`. This one runs the improved in-place idea and has examples.
 
 ## Limitation
 
