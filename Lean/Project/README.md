@@ -17,7 +17,7 @@ Examples:
 ## Repo
 
 ```text
-https://github.com/CCCCCCieL/cs5232-2026
+https://github.com/CCCCCCieL/cs5232-2026/tree/project/Lean/Project
 ```
 
 The tagged release link can be added after the final tag is made.
