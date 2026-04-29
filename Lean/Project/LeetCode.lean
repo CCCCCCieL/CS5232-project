@@ -26,6 +26,88 @@ def inRangeForArray (a : Array Int) (x : Int) : Prop :=
 def targetIndex (x : Int) : Nat :=
   Int.toNat x - 1
 
+@[grind]
+def leetcodeSwap (a : Array Int) (i target : Nat) : Array Int :=
+  (a.set! target a[i]!).set! i a[target]!
+
+theorem leetcodeSwap_preserves_multiset
+    (a : Array Int) (i target : Nat)
+    (hi : i < a.size) (htarget : target < a.size) :
+    (leetcodeSwap a i target).toMultiset = a.toMultiset := by
+  simpa [leetcodeSwap] using Array.multiset_swap a i target hi htarget
+
+theorem leetcodeSwap_preserves_size
+    (a : Array Int) (i target : Nat) :
+    (leetcodeSwap a i target).size = a.size := by
+  simp [leetcodeSwap]
+
+theorem targetIndex_lt_of_inRange
+    (a : Array Int) (x : Int)
+    (hxlo : 1 <= x) (hxhi : x <= Int.ofNat a.size) :
+    targetIndex x < a.size := by
+  have hxnatle : x.toNat <= a.size := by
+    exact Int.toNat_le.mpr hxhi
+  have hxnatpos : 0 < x.toNat := by
+    have hxnonneg : 0 <= x := by omega
+    have hxcast : (x.toNat : Int) = x := Int.toNat_of_nonneg hxnonneg
+    omega
+  simp [targetIndex]
+  omega
+
+theorem leetcodeSwap_places_current_value
+    (a : Array Int) (i : Nat) (x : Int)
+    (_hi : i < a.size)
+    (hx : a[i]! = x)
+    (hxlo : 1 <= x) (hxhi : x <= Int.ofNat a.size) :
+    (leetcodeSwap a i (targetIndex x))[targetIndex x]! = x := by
+  have htarget : targetIndex x < a.size :=
+    targetIndex_lt_of_inRange a x hxlo hxhi
+  rw [leetcodeSwap]
+  rw [Array.get_set_c (targetIndex x) i a[targetIndex x]! (a.set! (targetIndex x) a[i]!)]
+  · by_cases hsame : targetIndex x = i
+    · simp [hsame, hx]
+    · simp [hsame]
+      change (a.set! (targetIndex x) a[i]!)[targetIndex x]! = x
+      rw [Array.get_set_c (targetIndex x) (targetIndex x) a[i]! a]
+      · simp [hx]
+      · exact htarget
+  · simpa using htarget
+
+theorem swap_fuel_decreases (stepsLeft : Nat) (hsteps : 0 < stepsLeft) :
+    stepsLeft - 1 < stepsLeft := by
+  omega
+
+attribute [grind]
+  leetcodeSwap_preserves_multiset
+  leetcodeSwap_preserves_size
+  targetIndex_lt_of_inRange
+  leetcodeSwap_places_current_value
+  swap_fuel_decreases
+
+/-!
+Verified single-step version of the LeetCode swap.
+
+This is the small proof component used by the rearranging idea: assuming
+`arr[i]` is a positive in-range value, swapping it with its target position
+preserves the array multiset, preserves the size, and places that value at
+index `arr[i] - 1`.
+-/
+
+method leetcodeSwapStep (mut arr : Array Int) (i : Nat) return (u : Unit)
+  require i < arr.size
+  require 1 <= arr[i]!
+  require arr[i]! <= Int.ofNat arr.size
+  ensures arr.size = arrOld.size
+  ensures arr[targetIndex arrOld[i]!]! = arrOld[i]!
+  do
+    let x := arr[i]!
+    let target := targetIndex x
+    swap! arr[target]! arr[i]!
+    return
+
+prove_correct leetcodeSwapStep by
+  loom_solve
+
 /-!
 This is the LeetCode style solution idea.
 It tries to put value `x` into index `x - 1`.
@@ -49,6 +131,8 @@ method firstMissingPositive_LeetCodeDemo (mut arr : Array Int) return (ans : Nat
         invariant arr.size = n
         invariant i < n
         invariant stepsLeft <= n
+        -- Termination fuel: every real swap decreases `stepsLeft`; if no swap
+        -- is needed, the loop exits by setting `stepsLeft := 0`.
         decreasing stepsLeft
       do
         let x := arr[i]!
@@ -113,6 +197,7 @@ method firstMissingPositive_LeetCodeChecked (mut arr : Array Int) return (ans : 
         invariant original = arrOld
         invariant i < n
         invariant stepsLeft <= n
+        -- Termination fuel for the rearranging loop.
         decreasing stepsLeft
       do
         let x := arr[i]!

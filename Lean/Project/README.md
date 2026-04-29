@@ -21,7 +21,6 @@ Examples:
 https://github.com/CCCCCCieL/cs5232-2026/tree/project/Lean/Project
 ```
 
-The tagged release link can be added after the final tag is made.
 
 ## Files
 
@@ -40,7 +39,7 @@ From the `Lean` folder:
 lake build Project
 ```
 
-On the current machine it takes about 1 minute. Some warnings may come from libraries.
+On my personal laptop, it takes about 1 minute. Some warnings may come from libraries.
 
 ## Run Examples
 
@@ -56,7 +55,8 @@ Expected output:
 DivM.res 3
 DivM.res 2
 DivM.res 1
-
+```
+```
 # Project/LeetCode.lean
 DivM.res (3, #[1, 2, 0])
 DivM.res (2, #[1, -1, 3, 4])
@@ -66,31 +66,40 @@ DivM.res (3, #[1, 2])
 DivM.res (3, #[1, 2, 0])
 DivM.res (2, #[3, 4, -1, 1])
 DivM.res (1, #[7, 8, 9, 11, 12])
-```
 
-The first three lines are from the baseline file. In the LeetCode file, the first five lines are from the LeetCode-style demo. It also prints the array after rearranging. The final three lines are from the verified in-place scan.
+The first five lines are from the LeetCode-style demo. It also prints the array after rearranging. 
+The final three lines are from the verified in-place scan.
+```
 
 ## Proof
 
-The main spec is `IsFirstMissingPositive a ans`.
+The main specification is `IsFirstMissingPositive a ans`.
 
-It says:
+It means three things:
 
 1. `ans` is positive;
-2. `ans` is not in the array;
-3. every smaller positive number is in the array.
+2. `ans` does not appear in the array;
+3. every smaller positive number appears in the array.
 
-The proved program is `firstMissingPositive_Baseline`. It checks candidate answers from 1 upward and scans the array each time.
+The main proved program is `firstMissingPositive_Baseline`. It checks possible answers from `1` upwards. For each possible answer, it scans the whole array to see whether this number appears.
 
-The proof uses two nested loop invariants. The outer loop records that every positive number smaller than the current candidate has already been found. It also records that if the algorithm has stopped early, the stored answer already satisfies `IsFirstMissingPositive`. The inner loop records whether the current candidate has been seen in the scanned prefix.
+The proof uses two nested loop invariants. The outer loop remembers that every positive number smaller than the current candidate has already been found. It also remembers that if the algorithm has already stopped, then the stored answer is already a correct first missing positive. The inner loop records whether the current candidate has appeared in the part of the array that has already been
+scanned.
 
-The only extra mathematical lemma is `not_occurs_size_add_one_of_all_smaller`. It covers the case where all values `1, ..., a.size` occur in the array. The lemma proves that `a.size + 1` cannot also occur: otherwise those `a.size + 1` positive values would give an injection into only `a.size` array positions, which is impossible.
+The only extra mathematical lemma is `not_occurs_size_add_one_of_all_smaller`. It is used for the final case. If all values `1, ..., a.size` appear in the array, then the answer should be `a.size + 1`. The lemma says that `a.size + 1` cannot also appear in the array, because an array of size `a.size` cannot contain `a.size + 1` different positive
+values.
 
-`firstMissingPositiveInPlace` is the verified in-place scan used for the minimum project goal. It works directly over the mutable input array, uses no auxiliary array, and keeps `arr = arrOld` as a frame invariant so that the final postcondition is about the original input. Its `decreasing` clauses give the termination arguments for the outer candidate loop and the inner array scan.
+`firstMissingPositiveInPlace` is another proved method. It is written over a mutable input array and does not use another array. In this method, I keep `arr = arrOld` as a frame invariant, so the final result is still proved for the original input. The `decreasing` clauses are used to show that the outer
+candidate loop and the inner scan loop both terminate.
 
-There is also `firstMissingPositive_LeetCodeDemo`. This one runs the improved rearranging idea and has examples, but it is kept as an executable demo rather than the main verified development.
+There is also `firstMissingPositive_LeetCodeDemo`. This method runs the faster LeetCode-style rearranging idea and has examples. However, it is kept as an executable demo, not as the main fully verified method. The file proves some basic support lemmas for this idea. For example, `leetcodeSwap_preserves_multiset` shows that a swap keeps the same multiset of array elements, `leetcodeSwap_places_current_value` shows that a valid swap
+puts the current value into its target position, and `swap_fuel_decreases` explains the step counter used to avoid an infinite swap loop.
+
+The method `leetcodeSwapStep` puts the single-swap proof into a small Velvet method. If `arr[i]` is positive and in range, it proves that the swap keeps the array size and places `arr[i]` at index `arr[i] - 1`.
 
 ## Limitation
 
-The baseline algorithm and the in-place scan are fully proved. The LeetCode-style rearranging code is implemented and runs on the examples, but the direct proof of the rearranging loop is not included. Such a proof would need invariants showing that each swap preserves the multiset of positive values and that after the rearranging loop, every present value `x` in range is placed at index `x - 1`.
+The baseline algorithm and the in-place scan are fully proved. The LeetCode-style rearranging code is also implemented and runs on the examples. Some basic facts about one swap are proved, such as size preservation and target placement.
+
+However, the full proof of the whole rearranging loop is not included. To prove it, we would need stronger loop invariants. These invariants should connect all the swaps together and show that the final array has the expected placement property. This is the main future work of the project.
 
