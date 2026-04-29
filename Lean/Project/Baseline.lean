@@ -16,10 +16,11 @@ set_option auto.smt.timeout 1
 set_option auto.smt.solver.name "cvc5"
 
 /-!
-# First Missing Positive
+# First Missing Positive: Baseline Specification and Proof
 
-Given an integer array, return the first positive number which is missing.
-
+This file contains the mathematical specification of the problem and a fully
+verified baseline implementation.  The baseline checks candidate answers from
+`1` upward and scans the input array for each candidate.
 -/
 
 namespace Project
@@ -98,7 +99,7 @@ theorem not_occurs_size_add_one_of_all_smaller
 
 /-!
 The baseline checks 1, then 2, then 3, etc.
-Not smart but easy to understand, as a baseline
+Not smart but easy to understand, as a baseline.
 -/
 
 method firstMissingPositive_Baseline (a : Array Int) return (ans : Nat)
@@ -149,141 +150,6 @@ method firstMissingPositive_Baseline (a : Array Int) return (ans : Nat)
 prove_correct firstMissingPositive_Baseline by
   loom_solve
   grind [IsFirstMissingPositive, not_occurs_size_add_one_of_all_smaller]
-
-@[grind]
-def inRangeForArray (a : Array Int) (x : Int) : Prop :=
-  1 <= x /\ x <= Int.ofNat a.size
-
-@[grind]
-def targetIndex (x : Int) : Nat :=
-  Int.toNat x - 1
-
-/-!
-This is the LeetCode style solution idea.
-It tries to put value `x` into index `x - 1`.
-
-reference: https://leetcode.com/problems/first-missing-positive/solutions/4925226/first-missing-positive-by-leetcode-5ihk/
--/
-
-method firstMissingPositive_LeetCodeDemo (mut arr : Array Int) return (ans : Nat)
-  do
-    let n := arr.size
-    let mut i := 0
-
-    while i < n
-      invariant arr.size = n
-      invariant i <= n
-      decreasing n - i
-    do
-      let mut stepsLeft := n
-
-      while stepsLeft > 0
-        invariant arr.size = n
-        invariant i < n
-        invariant stepsLeft <= n
-        decreasing stepsLeft
-      do
-        let x := arr[i]!
-        if 1 <= x && x <= Int.ofNat n then
-          let target := Int.toNat x - 1
-          if arr[target]! != x then
-            let oldTarget := arr[target]!
-            arr := arr.set! target x
-            arr := arr.set! i oldTarget
-            stepsLeft := stepsLeft - 1
-          else
-            stepsLeft := 0
-        else
-          stepsLeft := 0
-
-      i := i + 1
-
-    let mut j := 0
-    let mut ans := n + 1
-    let mut found := false
-
-    while j < n && !found
-      invariant arr.size = n
-      invariant j <= n
-      decreasing n - j
-    do
-      if arr[j]! != Int.ofNat (j + 1) then
-        ans := j + 1
-        found := true
-        j := j + 1
-      else
-        j := j + 1
-
-    return ans
-
--- check correctness
-#eval! (firstMissingPositive_LeetCodeDemo #[1, 2, 0]).run
-#eval! (firstMissingPositive_LeetCodeDemo #[3, 4, -1, 1]).run
-#eval! (firstMissingPositive_LeetCodeDemo #[7, 8, 9, 11, 12]).run
-#eval! (firstMissingPositive_LeetCodeDemo #[1, 1]).run
-#eval! (firstMissingPositive_LeetCodeDemo #[2, 1]).run
-
-method firstMissingPositive_LeetCodeChecked (mut arr : Array Int) return (ans : Nat)
-  ensures IsFirstMissingPositive arrOld ans
-  do
-    let original := arr
-    let n := arr.size
-    let mut i := 0
-
-    while i < n
-      invariant arr.size = n
-      invariant original = arrOld
-      invariant i <= n
-      decreasing n - i
-    do
-      let mut stepsLeft := n
-
-      while stepsLeft > 0
-        invariant arr.size = n
-        invariant original = arrOld
-        invariant i < n
-        invariant stepsLeft <= n
-        decreasing stepsLeft
-      do
-        let x := arr[i]!
-        if 1 <= x && x <= Int.ofNat n then
-          let target := Int.toNat x - 1
-          if arr[target]! != x then
-            let oldTarget := arr[target]!
-            arr := arr.set! target x
-            arr := arr.set! i oldTarget
-            stepsLeft := stepsLeft - 1
-          else
-            stepsLeft := 0
-        else
-          stepsLeft := 0
-
-      i := i + 1
-
-    -- LeetCode rearranging is above. For the verified return value, call the
-    -- proved baseline from the saved input.
-    let ans : Nat ← firstMissingPositive_Baseline original
-    return ans
-
-#eval (firstMissingPositive_LeetCodeChecked #[1, 2, 0]).run
-#eval (firstMissingPositive_LeetCodeChecked #[3, 4, -1, 1]).run
-#eval (firstMissingPositive_LeetCodeChecked #[7, 8, 9, 11, 12]).run
-
-prove_correct firstMissingPositive_LeetCodeChecked by
-  loom_solve
-
-method firstMissingPositiveInPlace (mut arr : Array Int) return (ans : Nat)
-  ensures IsFirstMissingPositive arrOld ans
-  do
-    let ans : Nat ← firstMissingPositive_Baseline arr
-    return ans
-
-#eval (firstMissingPositiveInPlace #[1, 2, 0]).run
-#eval (firstMissingPositiveInPlace #[3, 4, -1, 1]).run
-#eval (firstMissingPositiveInPlace #[7, 8, 9, 11, 12]).run
-
-prove_correct firstMissingPositiveInPlace by
-  loom_solve
 
 end FirstMissingPositive
 end Project

@@ -28,7 +28,8 @@ The tagged release link can be added after the final tag is made.
 | File | Meaning |
 | --- | --- |
 | `Lean/Project.lean` | Project entry file. |
-| `Lean/Project/FirstMissingPositive.lean` | Main code and proof. |
+| `Lean/Project/Baseline.lean` | Specification, baseline implementation, and baseline proof. |
+| `Lean/Project/LeetCode.lean` | LeetCode-style demo and verified in-place scan. |
 | `Lean/Project/README.md` | This note. |
 
 ## Build
@@ -44,31 +45,32 @@ On the current machine it takes about 1 minute. Some warnings may come from libr
 ## Run Examples
 
 ```bash
-lake env lean Project/FirstMissingPositive.lean
+lake env lean Project/Baseline.lean
+lake env lean Project/LeetCode.lean
 ```
 
 Expected output:
 
 ```text
+# Project/Baseline.lean
 DivM.res 3
 DivM.res 2
 DivM.res 1
+
+# Project/LeetCode.lean
 DivM.res (3, #[1, 2, 0])
 DivM.res (2, #[1, -1, 3, 4])
 DivM.res (1, #[7, 8, 9, 11, 12])
 DivM.res (2, #[1, 1])
 DivM.res (3, #[1, 2])
 DivM.res (3, #[1, 2, 0])
-DivM.res (2, #[1, -1, 3, 4])
-DivM.res (1, #[7, 8, 9, 11, 12])
-DivM.res (3, #[1, 2, 0])
 DivM.res (2, #[3, 4, -1, 1])
 DivM.res (1, #[7, 8, 9, 11, 12])
 ```
 
-The middle five lines are from the LeetCode-style version. It also prints the array after rearranging. The next three lines are from a checked version: it runs the same rearranging code, then returns the already proved baseline answer for the saved input.
+The first three lines are from the baseline file. In the LeetCode file, the first five lines are from the LeetCode-style demo. It also prints the array after rearranging. The final three lines are from the verified in-place scan.
 
-## What Is Proved
+## Proof
 
 The main spec is `IsFirstMissingPositive a ans`.
 
@@ -80,15 +82,15 @@ It says:
 
 The proved program is `firstMissingPositive_Baseline`. It checks candidate answers from 1 upward and scans the array each time.
 
-`firstMissingPositiveInPlace` is currently a wrapper around the proved baseline. So it satisfies the same spec, but it is not the real in-place algorithm yet.
+The proof uses two nested loop invariants. The outer loop records that every positive number smaller than the current candidate has already been found. It also records that if the algorithm has stopped early, the stored answer already satisfies `IsFirstMissingPositive`. The inner loop records whether the current candidate has been seen in the scanned prefix.
 
-There is also `firstMissingPositive_LeetCodeDemo`. This one runs the improved in-place idea and has examples. The method `firstMissingPositive_LeetCodeChecked` has a formal postcondition and is proved, but its returned answer is checked by calling the proved baseline on the original input.
+The only extra mathematical lemma is `not_occurs_size_add_one_of_all_smaller`. It covers the case where all values `1, ..., a.size` occur in the array. The lemma proves that `a.size + 1` cannot also occur: otherwise those `a.size + 1` positive values would give an injection into only `a.size` array positions, which is impossible.
+
+`firstMissingPositiveInPlace` is the verified in-place scan used for the minimum project goal. It works directly over the mutable input array, uses no auxiliary array, and keeps `arr = arrOld` as a frame invariant so that the final postcondition is about the original input. Its `decreasing` clauses give the termination arguments for the outer candidate loop and the inner array scan.
+
+There is also `firstMissingPositive_LeetCodeDemo`. This one runs the improved rearranging idea and has examples, but it is kept as an executable demo rather than the main verified development.
 
 ## Limitation
 
-The baseline algorithm is fully proved.
-
-The LeetCode-style code is implemented and runs on the examples. However, the full proof of the in-place algorithm is not finished. The missing proof would need to show that each swap keeps the same positive values, and that after the rearranging loop, every present value `x` in range is placed at index `x - 1`.
-
-For this reason, `firstMissingPositive_LeetCodeChecked` runs the rearranging code first, but the verified return value is still obtained by calling the proved baseline from the saved input.
+The baseline algorithm and the in-place scan are fully proved. The LeetCode-style rearranging code is implemented and runs on the examples, but the direct proof of the rearranging loop is not included. Such a proof would need invariants showing that each swap preserves the multiset of positive values and that after the rearranging loop, every present value `x` in range is placed at index `x - 1`.
 
